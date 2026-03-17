@@ -9,7 +9,9 @@
 
 ## Contexto y Motivación
 
-El spec `2026-03-13-mysql-prisma-unified-architecture-design.md` definía MySQL como proveedor. El master spec (`2026-03-13-master-spec-estimaciones.md`) actualizó esa decisión a PostgreSQL. Este spec formaliza la implementación portable: el código funciona con cualquier proveedor PostgreSQL estándar (Railway, Neon, Supabase, Render, Docker local) cambiando únicamente variables de entorno.
+El master spec (`2026-03-13-master-spec-estimaciones.md`) es la fuente de verdad y establece PostgreSQL como proveedor de base de datos. El spec de MySQL (`2026-03-13-mysql-prisma-unified-architecture-design.md`) queda obsoleto en su `datasource` — la lógica de app (`lib/contacts.ts`, `lib/matchSteps.ts`, API routes) descrita ahí sigue siendo válida sin cambios.
+
+Este spec define el patrón de configuración portable: el código funciona con cualquier proveedor PostgreSQL estándar (Railway, Neon, Supabase, Render, Docker local) cambiando únicamente variables de entorno.
 
 ---
 
@@ -102,7 +104,12 @@ model MatchStepOption {
 
 ### `prisma/seed.ts`
 
-Carga las preguntas del MatchForm desde `lib/formData.ts` como estado inicial.
+Carga las preguntas del MatchForm desde `lib/formData.ts` como estado inicial. El seed es idempotente: elimina todos los pasos existentes antes de insertar, por lo que es seguro correrlo múltiples veces.
+
+> **Prerequisito:** `lib/formData.ts` debe exportar `matchSteps` con la siguiente estructura:
+> ```typescript
+> export const matchSteps: Array<{ question: string; columns?: 1 | 2; options: string[] }>
+> ```
 
 ```typescript
 import { PrismaClient } from "@prisma/client";
@@ -111,6 +118,10 @@ import { matchSteps } from "../lib/formData";
 const prisma = new PrismaClient();
 
 async function main() {
+  // Idempotente: borra y recrea para poder correr seed múltiples veces
+  await prisma.matchStepOption.deleteMany({});
+  await prisma.matchStep.deleteMany({});
+
   for (const [i, step] of matchSteps.entries()) {
     const created = await prisma.matchStep.create({
       data: {
@@ -159,7 +170,7 @@ Sin cambios respecto al spec anterior (`2026-03-13-mysql-prisma-unified-architec
 
 ### `lib/matchSteps.ts`
 
-Sin cambios respecto al spec anterior. Incluye fallback a `lib/formData.ts` si la BD está vacía o si la conexión falla.
+Sin cambios respecto al spec anterior. Incluye fallback a `lib/formData.ts` si la BD está vacía o si la conexión falla. Ver `2026-03-13-mysql-prisma-unified-architecture-design.md`, sección 2 para la implementación completa con lógica de fallback.
 
 ---
 
@@ -172,16 +183,16 @@ Sin cambios respecto al spec anterior. Incluye fallback a `lib/formData.ts` si l
 #   pon el mismo valor en DATABASE_URL y DIRECT_URL
 #
 # Si tu proveedor SÍ usa pooling separado (Neon, Supabase):
-#   DATABASE_URL = URL pooled
-#   DIRECT_URL   = URL directa (para migraciones)
+#   DATABASE_URL = URL pooled  (app en runtime)
+#   DIRECT_URL   = URL directa (solo migraciones)
 
 DATABASE_URL="postgresql://user:pass@host:5432/dbname"
 DIRECT_URL="postgresql://user:pass@host:5432/dbname"
 
-# Zapier webhooks
-ZAPIER_WEBHOOK_FORM_STARTED=""
-ZAPIER_WEBHOOK_FORM_COMPLETED=""
-ZAPIER_WEBHOOK_OUTREACH=""
+# Zapier webhooks (ver flujos en 2026-03-13-master-spec-estimaciones.md, Fase 4)
+ZAPIER_WEBHOOK_OUTREACH=""       # Zap 1: nuevo contacto outreach
+ZAPIER_WEBHOOK_FORM_STARTED=""   # Zap 2: form iniciado
+ZAPIER_WEBHOOK_FORM_COMPLETED="" # Zap 3: form completado
 
 # Calendly
 NEXT_PUBLIC_CALENDLY_URL=""
@@ -191,7 +202,7 @@ NEXT_PUBLIC_CALENDLY_URL=""
 
 ## Cambio en `package.json`
 
-Agregar `postinstall` para que el cliente Prisma se genere automáticamente en cualquier deploy:
+Agregar `postinstall` para que el cliente Prisma se genere automáticamente en cualquier deploy (Vercel, Railway, CI/CD). Sin esto, el cliente no existe después de un `npm install` limpio y la app falla en runtime.
 
 ```json
 "scripts": {
@@ -246,9 +257,11 @@ Agregar a `package.json` para el seed:
 ## Criterios de Aceptación
 
 - `prisma/schema.prisma` tiene `provider = "postgresql"` y `directUrl = env("DIRECT_URL")`
+- `echo "SELECT 1;" | npx prisma db execute --stdin` termina sin error (verifica conexión antes de migrar)
 - `npx prisma migrate dev --name init` crea las tres tablas sin errores en cualquier proveedor PostgreSQL
 - `npx prisma db seed` carga los pasos del match sin errores
-- Con BD vacía: `getMatchSteps()` retorna los datos dummy (fallback funciona)
+- `npx prisma db seed` corrido dos veces no produce duplicados ni errores (seed idempotente)
+- Con BD vacía: `getMatchSteps()` retorna los datos dummy (fallback funciona — ver `lib/matchSteps.ts` en spec MySQL)
 - Con BD seedeada: `getMatchSteps()` retorna los datos de PostgreSQL
 - Si la conexión falla: `getMatchSteps()` retorna los datos dummy sin error visible
 - Cambiar de proveedor requiere únicamente actualizar `DATABASE_URL` y `DIRECT_URL`
