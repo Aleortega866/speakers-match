@@ -46,7 +46,9 @@ Contiene `buildCommand`, `devCommand`, `installCommand` — todo lo maneja Railw
 
 Estos archivos están definidos en `2026-03-17-postgresql-portable-design.md`. Solo falta crearlos en el repo.
 
-### `prisma/schema.prisma`
+> **Nota sobre `prisma.config.ts`:** El archivo ya existe en la raíz con `datasource.url = process.env.DATABASE_URL`. No requiere cambios — `schema.prisma` es la fuente de verdad para el schema y las migraciones. `prisma.config.ts` es compatible con la configuración dual URL.
+
+### `prisma/schema.prisma` (crear o sobreescribir si existe incompleto)
 
 ```prisma
 generator client {
@@ -178,9 +180,14 @@ railway login
 
 ```bash
 # Desde la carpeta del proyecto
-railway init
-railway link
+# Si aún NO tienes proyecto en Railway:
+railway init   # crea el proyecto Y lo linkea automáticamente
+
+# Si ya creaste el proyecto desde el dashboard de Railway:
+railway link   # solo linkea el proyecto existente
 ```
+
+> Usar `railway init` O `railway link`, no ambos. `init` ya linkea el proyecto al crearlo.
 
 ### Paso 2 — Agregar Postgres
 
@@ -197,10 +204,18 @@ En el dashboard → servicio Next.js → **Variables**:
 
 ### Paso 4 — Primera migración (desde local)
 
+Agregar al `.env` local las URLs de Railway:
+
 ```bash
-# Copiar DATABASE_URL de Railway a .env local
-# Luego:
-npx prisma migrate dev --name init   # crea las tablas
+# .env local
+DATABASE_URL="postgresql://..."   # copiar de Railway dashboard
+DIRECT_URL="postgresql://..."     # mismo valor que DATABASE_URL
+```
+
+> **Solo para el primer deploy con BD vacía.** `migrate dev` es un comando de desarrollo — no correrlo contra una BD que ya tenga datos.
+
+```bash
+npx prisma migrate dev --name init   # crea las tablas (BD vacía)
 npx prisma db seed                    # carga preguntas del MatchForm
 ```
 
@@ -231,8 +246,10 @@ railway up
 |---|---|
 | `railway.toml` | Crear |
 | `vercel.json` | Eliminar |
-| `prisma/schema.prisma` | Crear |
+| `prisma/schema.prisma` | Crear (o sobreescribir si existe incompleto) |
 | `prisma/seed.ts` | Crear |
+| `prisma.config.ts` | Sin cambios |
+| `package.json` | Sin cambios (`postinstall` y `prisma.seed` ya están) |
 
 Sin cambios en código de app (`lib/`, `app/`, `components/`).
 
@@ -246,7 +263,7 @@ Sin cambios en código de app (`lib/`, `app/`, `components/`).
 - `npx prisma migrate dev --name init` crea las tres tablas sin errores apuntando a Railway Postgres
 - `npx prisma db seed` carga los pasos del MatchForm sin errores
 - `npx prisma db seed` corrido dos veces no produce duplicados
-- `railway up` termina exitosamente y la app responde en la URL de Railway
+- `railway up` termina exitosamente y `GET /` devuelve HTTP 200 en la URL de Railway (el mismo endpoint configurado como `healthcheckPath = "/"` en `railway.toml`)
 
 ---
 
