@@ -1,0 +1,56 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider  = "postgresql"
+  url       = env("DATABASE_URL")
+  directUrl = env("DIRECT_URL")
+}
+
+// ─── Contactos / Leads ───────────────────────────────────────────────────────
+
+model Contact {
+  id                      Int       @id @default(autoincrement())
+  token                   String?   @unique @db.VarChar(8)
+  nombre                  String    @db.VarChar(100)
+  apellido                String    @db.VarChar(100)
+  empresa                 String    @db.VarChar(200)
+  email                   String    @db.VarChar(254)
+  origen                  String    @default("outreach") @db.VarChar(20)
+  enviado_at              DateTime?
+  form_started_at         DateTime?
+  form_completed_at       DateTime?
+  fecha_evento            String?   @db.VarChar(20)
+  calendly_booked_at      DateTime?
+  correo_abandono_enviado Boolean   @default(false)
+  match_answers           Json?
+  created_at              DateTime  @default(now())
+
+  @@index([email])
+  @@index([origen, form_started_at])
+}
+
+// ─── Preguntas del Match ──────────────────────────────────────────────────────
+
+model MatchStep {
+  id       Int               @id @default(autoincrement())
+  orden    Int
+  question String            @db.VarChar(500)
+  columns  Int               @default(1)
+  active   Boolean           @default(true)
+  options  MatchStepOption[]
+
+  @@index([active, orden])
+}
+
+model MatchStepOption {
+  id     Int       @id @default(autoincrement())
+  stepId Int
+  step   MatchStep @relation(fields: [stepId], references: [id], onDelete: Cascade)
+  label  String    @db.VarChar(300)
+  orden  Int
+  active Boolean   @default(true)
+
+  @@index([stepId, active, orden])
+}
