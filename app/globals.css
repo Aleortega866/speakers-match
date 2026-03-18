@@ -44,10 +44,14 @@
 }
 
 /* ============================================================
-   Reset base
+   Reset base + scroll suave
    ============================================================ */
 * {
   box-sizing: border-box;
+}
+
+html {
+  scroll-behavior: smooth;
 }
 
 body {

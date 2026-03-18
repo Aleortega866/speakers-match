@@ -5,11 +5,12 @@ const metrics = [
   { num: "04", value: "98%", unit: "satisfacción", label: "De nuestros clientes" },
 ];
 
+import CountUp from "@/components/ui/CountUp";
 import Reveal from "@/components/ui/Reveal";
 
 export default function WhyUs() {
   return (
-    <section className="pt-section pb-section" style={{ background: "#F2EDE4" }}>
+    <section className="pt-section pb-section" style={{ background: "#f5f5f5" }}>
       <div className="container-page">
 
         {/* Label editorial */}
@@ -31,13 +32,14 @@ export default function WhyUs() {
                 {m.num}
               </span>
 
-              {/* Valor masivo */}
-              <span
+              {/* Valor masivo — animación de conteo al entrar en vista */}
+              <CountUp
+                value={m.value}
+                duration={1200}
+                delay={i * 80}
                 className="font-heading font-extrabold text-black leading-none tracking-tighter"
                 style={{ fontSize: "clamp(2.5rem, 5vw, 5rem)" }}
-              >
-                {m.value}
-              </span>
+              />
 
               {/* Unidad */}
               <span

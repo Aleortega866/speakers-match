@@ -19,6 +19,7 @@ const speakers = [
   },
 ];
 
+import CountUp from "@/components/ui/CountUp";
 import Reveal from "@/components/ui/Reveal";
 
 export default function SpeakerShowcase() {
@@ -34,7 +35,7 @@ export default function SpeakerShowcase() {
           <div className="flex items-center gap-3">
             <div className="w-8 h-px" style={{ background: "#ddd" }} />
             <span className="font-body text-[10px] tracking-[0.15em] uppercase" style={{ color: "#bbb" }}>
-              +200 disponibles
+              <CountUp value="+200" duration={1000} /> disponibles
             </span>
           </div>
         </div>
@@ -103,12 +104,12 @@ export default function SpeakerShowcase() {
         {/* Contador total — editorial, al pie de la lista */}
         <div className="border-t pt-8 flex items-center justify-between" style={{ borderColor: "#eee" }}>
           <div className="flex items-baseline gap-3">
-            <span
+            <CountUp
+              value="+200"
+              duration={1200}
               className="font-heading font-extrabold text-black leading-none"
               style={{ fontSize: "clamp(2rem, 6vw, 5rem)" }}
-            >
-              +200
-            </span>
+            />
             <span
               className="font-body text-[11px] tracking-[0.15em] uppercase"
               style={{ color: "#aaa" }}

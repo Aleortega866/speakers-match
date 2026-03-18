@@ -1,5 +1,9 @@
 "use client";
-import { useEffect, useRef, useState } from "react";
+import { useRef, useEffect } from "react";
+import gsap from "gsap";
+import { ScrollTrigger } from "gsap/ScrollTrigger";
+
+gsap.registerPlugin(ScrollTrigger);
 
 interface Props {
   children: React.ReactNode;
@@ -8,35 +12,48 @@ interface Props {
 }
 
 /**
- * Wrapper that plays `.animate-reveal-up` once the element enters the viewport.
- * Uses IntersectionObserver (no library). Respects prefers-reduced-motion via CSS.
+ * Scroll-reveal powered by GSAP ScrollTrigger.
+ * - Scroll DOWN  → elemento aparece (y:34→0, opacity:0→1)
+ * - Scroll UP    → elemento desaparece (reverse)
+ * - Scroll DOWN again → vuelve a aparecer
+ *
+ * toggleActions: "play none play reverse"
+ *   onEnter      → play   (bajando, entra al viewport)
+ *   onLeave      → none   (sube por encima del viewport)
+ *   onEnterBack  → play   (vuelve a entrar desde arriba)
+ *   onLeaveBack  → reverse (sube y sale por abajo del viewport)
  */
 export default function Reveal({ children, delay = 0, className = "" }: Props) {
   const ref = useRef<HTMLDivElement>(null);
-  const [visible, setVisible] = useState(false);
 
   useEffect(() => {
     const el = ref.current;
     if (!el) return;
-    const observer = new IntersectionObserver(
-      ([entry]) => {
-        if (entry.isIntersecting) {
-          setVisible(true);
-          observer.disconnect();
+
+    const ctx = gsap.context(() => {
+      gsap.fromTo(
+        el,
+        { y: 34, opacity: 0 },
+        {
+          y: 0,
+          opacity: 1,
+          duration: 0.78,
+          delay: delay / 1000,
+          ease: "power3.out",
+          scrollTrigger: {
+            trigger: el,
+            start: "top 88%",
+            toggleActions: "play none restart reset",
+          },
         }
-      },
-      { threshold: 0.1 }
-    );
-    observer.observe(el);
-    return () => observer.disconnect();
-  }, []);
+      );
+    });
+
+    return () => ctx.revert();
+  }, [delay]);
 
   return (
-    <div
-      ref={ref}
-      className={`${visible ? "animate-reveal-up" : "opacity-0"}${className ? ` ${className}` : ""}`}
-      style={visible && delay > 0 ? { animationDelay: `${delay}ms` } : undefined}
-    >
+    <div ref={ref} className={className}>
       {children}
     </div>
   );

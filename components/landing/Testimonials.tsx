@@ -1,3 +1,5 @@
+import TestimonialsAnimator from "@/components/ui/TestimonialsAnimator";
+
 const testimonials = [
   {
     quote:
@@ -15,33 +17,29 @@ const testimonials = [
   },
 ];
 
-import Reveal from "@/components/ui/Reveal";
-
 export default function Testimonials() {
   return (
-    <section className="bg-white pt-section pb-section">
+    <section className="testimonials-section bg-white pt-section pb-section">
       <div className="container-page">
 
-        {/* Label editorial */}
-        <p className="font-body text-[10px] tracking-[0.25em] uppercase mb-16" style={{ color: "#bbb" }}>
+        <p className="t-label font-body text-[10px] tracking-[0.25em] uppercase mb-16" style={{ color: "#bbb" }}>
           Clientes
         </p>
 
         <div className="grid grid-cols-1 md:grid-cols-2 gap-16 md:gap-8">
           {testimonials.map((t, i) => (
-            <Reveal key={t.name} delay={i * 160}>
-            <div className="flex flex-col">
+            <div key={t.name} className={`t-card-${i} flex flex-col`}>
 
-              {/* Comilla gigante editorial */}
+              {/* Comilla gigante */}
               <span
-                className="font-heading font-extrabold text-black leading-none select-none mb-4"
+                className="t-quote-mark font-heading font-extrabold text-black leading-none select-none mb-4"
                 style={{ fontSize: "clamp(4rem, 8vw, 8rem)", opacity: 0.08 }}
                 aria-hidden
               >
                 "
               </span>
 
-              {/* La cita — cuerpo del pull-quote */}
+              {/* Cita */}
               <blockquote
                 className="font-body font-light text-black leading-relaxed -mt-8 md:-mt-10"
                 style={{ fontSize: "clamp(1rem, 1.5vw, 1.25rem)" }}
@@ -51,8 +49,11 @@ export default function Testimonials() {
 
               {/* Línea + atribución */}
               <div className="flex items-center gap-4 mt-8">
-                <div className="w-8 h-px flex-shrink-0" style={{ background: "#000" }} />
-                <div>
+                <div
+                  className="t-line w-8 h-px flex-shrink-0"
+                  style={{ background: "#000" }}
+                />
+                <div className="t-attribution">
                   <p className="font-body font-semibold text-black text-sm">
                     {t.name}
                   </p>
@@ -62,20 +63,18 @@ export default function Testimonials() {
                 </div>
               </div>
 
-              {/* Número de testimonial — detalle editorial */}
-              <p
-                className="font-body text-[10px] tracking-[0.2em] mt-8"
-                style={{ color: "#ddd" }}
-              >
+              {/* Número editorial */}
+              <p className="t-num font-body text-[10px] tracking-[0.2em] mt-8" style={{ color: "#ddd" }}>
                 0{i + 1}
               </p>
 
             </div>
-            </Reveal>
           ))}
         </div>
 
       </div>
+
+      <TestimonialsAnimator />
     </section>
   );
 }

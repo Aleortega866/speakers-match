@@ -32,5 +32,35 @@ yarn-error.log*
 .claude
 .cursor
 
+scripts/
+
 # Visual companion brainstorming sessions
 .superpowers/
+
+# Tests
+tests/e2e/playwright-report
+tests/e2e/test-results
+test-results
+
+tests/*
+
+# Database
+prisma/migrations
+prisma/seed.ts
+prisma/schema.prisma
+prisma/seed.ts
+
+# Logs
+logs
+*.log
+*.log.*
+*.log.*.*
+*.log.*.*.*
+*.log.*.*.*.*
+*.log.*.*.*.*.*
+*.log.*.*.*.*.*.*
+*.log.*.*.*.*.*.*.*
+*.log.*.*.*.*.*.*.*.*
+*.log.*.*.*.*.*.*.*.*.*
+
+
