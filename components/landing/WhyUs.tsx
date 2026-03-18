@@ -5,6 +5,8 @@ const metrics = [
   { num: "04", value: "98%", unit: "satisfacción", label: "De nuestros clientes" },
 ];
 
+import Reveal from "@/components/ui/Reveal";
+
 export default function WhyUs() {
   return (
     <section className="pt-section pb-section" style={{ background: "#F2EDE4" }}>
@@ -17,8 +19,9 @@ export default function WhyUs() {
 
         {/* Métricas tipográficas — sin iconos, sin cajas */}
         <div className="grid grid-cols-2 lg:grid-cols-4 gap-x-6 gap-y-10">
-          {metrics.map((m) => (
-            <div key={m.num} className="flex flex-col">
+          {metrics.map((m, i) => (
+            <Reveal key={m.num} delay={i * 100}>
+            <div className="flex flex-col">
 
               {/* Número de orden — micro label */}
               <span
@@ -53,6 +56,7 @@ export default function WhyUs() {
               </p>
 
             </div>
+            </Reveal>
           ))}
         </div>
 

@@ -176,6 +176,22 @@ input[type="date"]::-webkit-calendar-picker-indicator {
 .stagger-4 { animation-delay: 400ms; }
 .stagger-5 { animation-delay: 500ms; }
 
+/* Scroll reveal — se activa desde IntersectionObserver */
+@keyframes revealUp {
+  from {
+    opacity: 0;
+    transform: translateY(28px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+.animate-reveal-up {
+  animation: revealUp 0.55s cubic-bezier(0.16, 1, 0.3, 1) both;
+}
+
 /* ============================================================
    Accesibilidad — prefers-reduced-motion
    ============================================================ */

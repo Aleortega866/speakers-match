@@ -1,4 +1,5 @@
 import Image from "next/image";
+import Reveal from "@/components/ui/Reveal";
 
 const logos = [
   { name: "BBVA", src: "/logo-bbva.png" },
@@ -18,21 +19,20 @@ export default function ClientLogos() {
           Confían en<br className="hidden lg:block" /> nosotros
         </p>
         <div className="flex flex-wrap items-center justify-center gap-logos">
-          {logos.map((logo) => (
-            <div
-              key={logo.name}
-              className="relative h-10 w-20 sm:h-12 sm:w-24 md:h-14 md:w-28 shrink-0"
-            >
-              <Image
-                src={logo.src}
-                alt={logo.name}
-                fill
-                className={`object-contain grayscale opacity-60 ${
-                  INVERTED_LOGOS.has(logo.name) ? "invert" : ""
-                }`}
-                sizes="(max-width: 576px) 80px, (max-width: 768px) 96px, 112px"
-              />
-            </div>
+          {logos.map((logo, i) => (
+            <Reveal key={logo.name} delay={i * 80}>
+              <div className="relative h-10 w-20 sm:h-12 sm:w-24 md:h-14 md:w-28">
+                <Image
+                  src={logo.src}
+                  alt={logo.name}
+                  fill
+                  className={`object-contain grayscale opacity-60 ${
+                    INVERTED_LOGOS.has(logo.name) ? "invert" : ""
+                  }`}
+                  sizes="(max-width: 576px) 80px, (max-width: 768px) 96px, 112px"
+                />
+              </div>
+            </Reveal>
           ))}
         </div>
       </div>

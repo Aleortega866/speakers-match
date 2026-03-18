@@ -19,6 +19,8 @@ const speakers = [
   },
 ];
 
+import Reveal from "@/components/ui/Reveal";
+
 export default function SpeakerShowcase() {
   return (
     <section className="bg-white pt-section pb-section">
@@ -39,63 +41,62 @@ export default function SpeakerShowcase() {
 
         {/* Speaker entries — editorial numeradas */}
         <div className="flex flex-col divide-y" style={{ borderColor: "#eee" }}>
-          {speakers.map((s) => (
-            <div
-              key={s.num}
-              className="flex items-start gap-6 py-8 group"
-            >
-              {/* Número de orden */}
-              <span
-                className="font-heading font-extrabold text-black leading-none shrink-0 select-none"
-                style={{
-                  fontSize: "clamp(2rem, 5vw, 4.5rem)",
-                  opacity: 0.07,
-                  minWidth: "4rem",
-                  lineHeight: 1,
-                }}
-                aria-hidden
-              >
-                {s.num}
-              </span>
-
-              {/* Foto placeholder */}
-              <div
-                className="w-16 h-20 shrink-0 bg-gray-100"
-                style={{ marginTop: "0.1rem" }}
-              />
-
-              {/* Datos */}
-              <div className="flex flex-col flex-1 min-w-0">
+          {speakers.map((s, i) => (
+            <Reveal key={s.num} delay={i * 100}>
+              <div className="flex items-start gap-6 py-8 group cursor-default">
+                {/* Número de orden */}
                 <span
-                  className="font-heading font-extrabold text-black leading-tight"
-                  style={{ fontSize: "clamp(1.1rem, 2.5vw, 1.75rem)" }}
+                  className="font-heading font-extrabold text-black leading-none shrink-0 select-none transition-opacity duration-300 group-hover:opacity-[0.14]"
+                  style={{
+                    fontSize: "clamp(2rem, 5vw, 4.5rem)",
+                    opacity: 0.07,
+                    minWidth: "4rem",
+                    lineHeight: 1,
+                  }}
+                  aria-hidden
                 >
-                  {s.nombre}
+                  {s.num}
                 </span>
-                <span
-                  className="font-body text-[11px] tracking-[0.15em] uppercase mt-1 mb-3"
-                  style={{ color: "#999" }}
-                >
-                  {s.tema}
-                </span>
-                <div className="flex items-center gap-3">
-                  <div className="w-4 h-px" style={{ background: "#ccc" }} />
-                  <span className="font-body text-xs" style={{ color: "#aaa" }}>
-                    {s.stat}
+
+                {/* Foto placeholder */}
+                <div
+                  className="w-16 h-20 shrink-0 bg-gray-100 transition-colors duration-300 group-hover:bg-gray-200"
+                  style={{ marginTop: "0.1rem" }}
+                />
+
+                {/* Datos */}
+                <div className="flex flex-col flex-1 min-w-0">
+                  <span
+                    className="font-heading font-extrabold text-black leading-tight transition-transform duration-200 group-hover:translate-x-1"
+                    style={{ fontSize: "clamp(1.1rem, 2.5vw, 1.75rem)" }}
+                  >
+                    {s.nombre}
+                  </span>
+                  <span
+                    className="font-body text-[11px] tracking-[0.15em] uppercase mt-1 mb-3"
+                    style={{ color: "#999" }}
+                  >
+                    {s.tema}
+                  </span>
+                  <div className="flex items-center gap-3">
+                    <div className="w-4 h-px" style={{ background: "#ccc" }} />
+                    <span className="font-body text-xs" style={{ color: "#aaa" }}>
+                      {s.stat}
+                    </span>
+                  </div>
+                </div>
+
+                {/* Badge disponible */}
+                <div className="hidden sm:flex items-center self-center shrink-0">
+                  <span
+                    className="font-body text-[10px] tracking-[0.2em] uppercase border px-3 py-1.5 transition-all duration-200 group-hover:border-black group-hover:text-black"
+                    style={{ borderColor: "#e5e5e5", color: "#999" }}
+                  >
+                    Disponible
                   </span>
                 </div>
               </div>
-
-              {/* Badge disponible */}
-              <div className="hidden sm:flex items-center self-center shrink-0">
-                <span
-                  className="font-body text-[10px] tracking-[0.2em] uppercase border px-3 py-1.5"
-                  style={{ borderColor: "#e5e5e5", color: "#999" }}
-                >
-                  Disponible
-                </span>
-              </div>
-            </div>
+            </Reveal>
           ))}
         </div>
 

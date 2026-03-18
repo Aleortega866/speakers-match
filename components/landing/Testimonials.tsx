@@ -15,6 +15,8 @@ const testimonials = [
   },
 ];
 
+import Reveal from "@/components/ui/Reveal";
+
 export default function Testimonials() {
   return (
     <section className="bg-white pt-section pb-section">
@@ -27,7 +29,8 @@ export default function Testimonials() {
 
         <div className="grid grid-cols-1 md:grid-cols-2 gap-16 md:gap-8">
           {testimonials.map((t, i) => (
-            <div key={t.name} className="flex flex-col">
+            <Reveal key={t.name} delay={i * 160}>
+            <div className="flex flex-col">
 
               {/* Comilla gigante editorial */}
               <span
@@ -68,6 +71,7 @@ export default function Testimonials() {
               </p>
 
             </div>
+            </Reveal>
           ))}
         </div>
 
