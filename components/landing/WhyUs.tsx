@@ -1,28 +1,57 @@
 const metrics = [
-  { value: "+15 años", label: "De experiencia en eventos corporativos" },
-  { value: "+500 eventos", label: "Realizados en México y LATAM" },
-  { value: "+200 speakers", label: "En catálogo activo" },
-  { value: "98%", label: "De satisfacción de clientes" },
+  { num: "01", value: "+15", unit: "años", label: "De experiencia en eventos corporativos" },
+  { num: "02", value: "+500", unit: "eventos", label: "Realizados en México y LATAM" },
+  { num: "03", value: "+200", unit: "speakers", label: "En catálogo activo" },
+  { num: "04", value: "98%", unit: "satisfacción", label: "De nuestros clientes" },
 ];
 
 export default function WhyUs() {
   return (
-    <section className="bg-[#f5f5f5] pt-section pb-section">
+    <section className="pt-section pb-section" style={{ background: "#F2EDE4" }}>
       <div className="container-page">
 
-        <h2 className="text-display font-heading font-extrabold text-black leading-none mb-12 text-center">
+        {/* Label editorial */}
+        <p className="font-body text-[10px] tracking-[0.25em] uppercase mb-12" style={{ color: "#999" }}>
           Por qué nosotros
-        </h2>
+        </p>
 
-        <div className="grid grid-cols-2 gap-8 md:gap-12 max-w-3xl mx-auto">
+        {/* Métricas tipográficas — sin iconos, sin cajas */}
+        <div className="grid grid-cols-2 lg:grid-cols-4 gap-x-6 gap-y-10">
           {metrics.map((m) => (
-            <div key={m.value} className="flex flex-col">
-              <span className="font-heading font-extrabold text-black leading-none mb-2" style={{ fontSize: "clamp(2rem, 4vw, 3.5rem)" }}>
+            <div key={m.num} className="flex flex-col">
+
+              {/* Número de orden — micro label */}
+              <span
+                className="font-body text-[10px] tracking-[0.2em] mb-3"
+                style={{ color: "#bbb" }}
+              >
+                {m.num}
+              </span>
+
+              {/* Valor masivo */}
+              <span
+                className="font-heading font-extrabold text-black leading-none tracking-tighter"
+                style={{ fontSize: "clamp(2.5rem, 5vw, 5rem)" }}
+              >
                 {m.value}
               </span>
-              <p className="font-body font-light text-gray-600 text-sm leading-relaxed">
+
+              {/* Unidad */}
+              <span
+                className="font-body text-[11px] tracking-[0.15em] uppercase mt-1 mb-4"
+                style={{ color: "#666" }}
+              >
+                {m.unit}
+              </span>
+
+              {/* Línea divisora */}
+              <div className="w-8 h-px mb-4" style={{ background: "#000" }} />
+
+              {/* Descripción */}
+              <p className="font-body font-light text-sm leading-snug" style={{ color: "#555" }}>
                 {m.label}
               </p>
+
             </div>
           ))}
         </div>

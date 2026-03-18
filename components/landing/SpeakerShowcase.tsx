@@ -1,15 +1,18 @@
 const speakers = [
   {
+    num: "01",
     nombre: "Alejandro Meza",
     tema: "Liderazgo · Innovación",
     stat: "+80 conferencias",
   },
   {
+    num: "02",
     nombre: "Sofía Ramírez",
     tema: "Motivación · Bienestar",
     stat: "+120 conferencias",
   },
   {
+    num: "03",
     nombre: "Carlos Ibáñez",
     tema: "Ventas · Alta Dirección",
     stat: "+200 conferencias",
@@ -21,53 +24,100 @@ export default function SpeakerShowcase() {
     <section className="bg-white pt-section pb-section">
       <div className="container-page">
 
-        <h2 className="text-display font-heading font-extrabold text-black leading-none mb-4 text-center">
-          Speakers del catálogo
-        </h2>
-        <p className="font-body font-light text-gray-500 text-center mb-12 max-w-xl mx-auto">
-          Una muestra de los perfiles disponibles. Tu propuesta incluirá los más alineados a tu evento.
-        </p>
+        {/* Header editorial */}
+        <div className="flex items-end justify-between mb-12 gap-4">
+          <p className="font-body text-[10px] tracking-[0.25em] uppercase" style={{ color: "#bbb" }}>
+            Speakers del catálogo
+          </p>
+          <div className="flex items-center gap-3">
+            <div className="w-8 h-px" style={{ background: "#ddd" }} />
+            <span className="font-body text-[10px] tracking-[0.15em] uppercase" style={{ color: "#bbb" }}>
+              +200 disponibles
+            </span>
+          </div>
+        </div>
 
-        <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 max-w-2xl mx-auto">
-          {speakers.map((speaker) => (
+        {/* Speaker entries — editorial numeradas */}
+        <div className="flex flex-col divide-y" style={{ borderColor: "#eee" }}>
+          {speakers.map((s) => (
             <div
-              key={speaker.nombre}
-              className="border border-gray-200 bg-white overflow-hidden"
+              key={s.num}
+              className="flex items-start gap-6 py-8 group"
             >
-              {/* Foto placeholder */}
-              <div className="h-48 bg-gray-200 w-full" />
+              {/* Número de orden */}
+              <span
+                className="font-heading font-extrabold text-black leading-none shrink-0 select-none"
+                style={{
+                  fontSize: "clamp(2rem, 5vw, 4.5rem)",
+                  opacity: 0.07,
+                  minWidth: "4rem",
+                  lineHeight: 1,
+                }}
+                aria-hidden
+              >
+                {s.num}
+              </span>
 
-              <div className="p-5">
-                <p className="font-heading font-bold text-black text-base mb-1">
-                  {speaker.nombre}
-                </p>
-                <p className="font-body text-sm text-gray-500 mb-3">
-                  {speaker.tema}
-                </p>
-                <div className="flex items-center justify-between">
-                  <span className="font-body text-xs text-gray-400">
-                    {speaker.stat}
-                  </span>
-                  <span className="text-xs font-semibold text-black border border-black px-2 py-0.5 tracking-wide">
-                    Disponible
+              {/* Foto placeholder */}
+              <div
+                className="w-16 h-20 shrink-0 bg-gray-100"
+                style={{ marginTop: "0.1rem" }}
+              />
+
+              {/* Datos */}
+              <div className="flex flex-col flex-1 min-w-0">
+                <span
+                  className="font-heading font-extrabold text-black leading-tight"
+                  style={{ fontSize: "clamp(1.1rem, 2.5vw, 1.75rem)" }}
+                >
+                  {s.nombre}
+                </span>
+                <span
+                  className="font-body text-[11px] tracking-[0.15em] uppercase mt-1 mb-3"
+                  style={{ color: "#999" }}
+                >
+                  {s.tema}
+                </span>
+                <div className="flex items-center gap-3">
+                  <div className="w-4 h-px" style={{ background: "#ccc" }} />
+                  <span className="font-body text-xs" style={{ color: "#aaa" }}>
+                    {s.stat}
                   </span>
                 </div>
               </div>
+
+              {/* Badge disponible */}
+              <div className="hidden sm:flex items-center self-center shrink-0">
+                <span
+                  className="font-body text-[10px] tracking-[0.2em] uppercase border px-3 py-1.5"
+                  style={{ borderColor: "#e5e5e5", color: "#999" }}
+                >
+                  Disponible
+                </span>
+              </div>
             </div>
           ))}
+        </div>
 
-          {/* Card contadora — 4ª celda, sin spanning */}
-          <div className="bg-black flex flex-col items-center justify-center py-16 sm:py-0 sm:min-h-[240px]">
-            <span className="font-heading font-extrabold text-white leading-none" style={{ fontSize: "clamp(3rem, 6vw, 5rem)" }}>
+        {/* Contador total — editorial, al pie de la lista */}
+        <div className="border-t pt-8 flex items-center justify-between" style={{ borderColor: "#eee" }}>
+          <div className="flex items-baseline gap-3">
+            <span
+              className="font-heading font-extrabold text-black leading-none"
+              style={{ fontSize: "clamp(2rem, 6vw, 5rem)" }}
+            >
               +200
             </span>
-            <span className="text-micro font-body text-gray-400 tracking-widest uppercase mt-2">
-              speakers
-            </span>
-            <span className="font-body text-xs text-gray-600 mt-1 text-center px-6">
-              en nuestro catálogo
+            <span
+              className="font-body text-[11px] tracking-[0.15em] uppercase"
+              style={{ color: "#aaa" }}
+            >
+              speakers en catálogo
             </span>
           </div>
+          <p className="font-body font-light text-sm text-right max-w-[200px] hidden sm:block" style={{ color: "#888" }}>
+            Tu propuesta incluirá los más alineados a tu evento
+          </p>
         </div>
 
       </div>

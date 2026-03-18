@@ -20,31 +20,53 @@ export default function Testimonials() {
     <section className="bg-white pt-section pb-section">
       <div className="container-page">
 
-        <h2 className="text-display font-heading font-extrabold text-black leading-none mb-12 text-center">
-          Lo que dicen nuestros clientes
-        </h2>
+        {/* Label editorial */}
+        <p className="font-body text-[10px] tracking-[0.25em] uppercase mb-16" style={{ color: "#bbb" }}>
+          Clientes
+        </p>
 
-        <div className="grid grid-cols-1 md:grid-cols-2 gap-6 max-w-4xl mx-auto">
-          {testimonials.map((t) => (
-            <div
-              key={t.name}
-              className="border border-gray-200 p-8 flex flex-col gap-6"
-            >
-              <p className="font-body font-light text-gray-700 leading-relaxed text-base italic">
-                &ldquo;{t.quote}&rdquo;
-              </p>
-              <div className="flex items-center gap-4">
-                {/* Avatar placeholder */}
-                <div className="w-12 h-12 rounded-full bg-gray-200 shrink-0" />
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-16 md:gap-8">
+          {testimonials.map((t, i) => (
+            <div key={t.name} className="flex flex-col">
+
+              {/* Comilla gigante editorial */}
+              <span
+                className="font-heading font-extrabold text-black leading-none select-none mb-4"
+                style={{ fontSize: "clamp(4rem, 8vw, 8rem)", opacity: 0.08 }}
+                aria-hidden
+              >
+                "
+              </span>
+
+              {/* La cita — cuerpo del pull-quote */}
+              <blockquote
+                className="font-body font-light text-black leading-relaxed -mt-8 md:-mt-10"
+                style={{ fontSize: "clamp(1rem, 1.5vw, 1.25rem)" }}
+              >
+                {t.quote}
+              </blockquote>
+
+              {/* Línea + atribución */}
+              <div className="flex items-center gap-4 mt-8">
+                <div className="w-8 h-px flex-shrink-0" style={{ background: "#000" }} />
                 <div>
                   <p className="font-body font-semibold text-black text-sm">
                     {t.name}
                   </p>
-                  <p className="font-body text-xs text-gray-400">
+                  <p className="font-body text-[11px] tracking-wide uppercase mt-0.5" style={{ color: "#999" }}>
                     {t.role} · {t.company}
                   </p>
                 </div>
               </div>
+
+              {/* Número de testimonial — detalle editorial */}
+              <p
+                className="font-body text-[10px] tracking-[0.2em] mt-8"
+                style={{ color: "#ddd" }}
+              >
+                0{i + 1}
+              </p>
+
             </div>
           ))}
         </div>
