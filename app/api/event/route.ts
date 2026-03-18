@@ -1,3 +1,4 @@
+import { after } from "next/server";
 import { NextRequest, NextResponse } from "next/server";
 import { upsertContactEvent, EventType } from "@/lib/contacts";
 
@@ -81,12 +82,12 @@ export async function POST(req: NextRequest) {
       : undefined,
   });
 
-  // Disparar webhook Zapier correspondiente (fire-and-forget)
+  // server-after-nonblocking: webhook dispara después de enviar la respuesta al cliente
   const webhookPayload = { type, token, email, fecha_evento, matchAnswers };
   if (type === "form_started") {
-    fireWebhook(process.env.ZAPIER_WEBHOOK_FORM_STARTED, webhookPayload);
+    after(() => fireWebhook(process.env.ZAPIER_WEBHOOK_FORM_STARTED, webhookPayload));
   } else if (type === "form_completed") {
-    fireWebhook(process.env.ZAPIER_WEBHOOK_FORM_COMPLETED, webhookPayload);
+    after(() => fireWebhook(process.env.ZAPIER_WEBHOOK_FORM_COMPLETED, webhookPayload));
   }
 
   return NextResponse.json({ ok: true }, { status: 200 });

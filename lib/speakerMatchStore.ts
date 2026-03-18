@@ -12,7 +12,8 @@ export interface SpeakerMatchData {
   token?: string;
 }
 
-const STORAGE_KEY = "speakerMatchData";
+// client-localstorage-schema: versioned key previene conflictos al cambiar el schema
+const STORAGE_KEY = "speakerMatchData:v1";
 
 // js-cache-storage: cache en memoria para evitar lecturas repetidas a localStorage
 // (se invalida en cada write y en clear)
