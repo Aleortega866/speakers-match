@@ -17,8 +17,9 @@ interface Props {
 export default function MatchForm({ steps }: Props) {
   const router = useRouter();
   const [currentStep, setCurrentStep] = useState(0);
+  // rerender-lazy-state-init: Array allocation solo al montar, no en cada render
   const [answers, setAnswers] = useState<string[]>(
-    Array(steps.length).fill("")
+    () => Array(steps.length).fill("")
   );
 
   // Hidratar respuestas previas desde localStorage si existen

@@ -14,6 +14,10 @@ export interface SpeakerMatchData {
 
 const STORAGE_KEY = "speakerMatchData";
 
+// js-cache-storage: cache en memoria para evitar lecturas repetidas a localStorage
+// (se invalida en cada write y en clear)
+let _cache: SpeakerMatchData | null = null;
+
 function getDefaultData(): SpeakerMatchData {
   return {
     intake: {
@@ -32,6 +36,8 @@ export function readSpeakerMatchData(): SpeakerMatchData {
     return getDefaultData();
   }
 
+  if (_cache) return _cache;
+
   try {
     const raw = window.localStorage.getItem(STORAGE_KEY);
     if (!raw) return getDefaultData();
@@ -43,7 +49,7 @@ export function readSpeakerMatchData(): SpeakerMatchData {
 
     const base = getDefaultData();
 
-    return {
+    _cache = {
       intake: {
         ...base.intake,
         ...(parsed.intake ?? {}),
@@ -53,6 +59,8 @@ export function readSpeakerMatchData(): SpeakerMatchData {
         : base.matchAnswers,
       token: typeof parsed.token === "string" ? parsed.token : undefined,
     };
+
+    return _cache;
   } catch {
     return getDefaultData();
   }
@@ -71,6 +79,8 @@ export function writeSpeakerMatchData(partial: Partial<SpeakerMatchData>): void 
     token: partial.token !== undefined ? partial.token : current.token,
   };
 
+  _cache = merged;
+
   try {
     window.localStorage.setItem(STORAGE_KEY, JSON.stringify(merged));
   } catch {
@@ -79,6 +89,7 @@ export function writeSpeakerMatchData(partial: Partial<SpeakerMatchData>): void 
 }
 
 export function clearSpeakerMatchData(): void {
+  _cache = null;
   if (typeof window === "undefined") return;
   try {
     window.localStorage.removeItem(STORAGE_KEY);
@@ -86,4 +97,3 @@ export function clearSpeakerMatchData(): void {
     // noop
   }
 }
-
