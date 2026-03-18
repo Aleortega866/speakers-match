@@ -9,6 +9,7 @@ export interface SpeakerMatchIntakeData {
 export interface SpeakerMatchData {
   intake: SpeakerMatchIntakeData;
   matchAnswers: string[];
+  token?: string;
 }
 
 const STORAGE_KEY = "speakerMatchData";
@@ -50,6 +51,7 @@ export function readSpeakerMatchData(): SpeakerMatchData {
       matchAnswers: Array.isArray(parsed.matchAnswers)
         ? parsed.matchAnswers.map((v) => (typeof v === "string" ? v : "")).filter(Boolean)
         : base.matchAnswers,
+      token: typeof parsed.token === "string" ? parsed.token : undefined,
     };
   } catch {
     return getDefaultData();
@@ -66,6 +68,7 @@ export function writeSpeakerMatchData(partial: Partial<SpeakerMatchData>): void 
       ...(partial.intake ?? {}),
     },
     matchAnswers: partial.matchAnswers ?? current.matchAnswers,
+    token: partial.token !== undefined ? partial.token : current.token,
   };
 
   try {

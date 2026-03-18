@@ -1,9 +1,11 @@
-import { Suspense } from "react";
 import Logo from "@/components/ui/Logo";
 import MatchForm from "@/components/match/MatchForm";
 import GuaranteePanel from "@/components/match/GuaranteePanel";
+import { getMatchSteps } from "@/lib/matchSteps";
 
-export default function MatchPage() {
+export default async function MatchPage() {
+  const steps = await getMatchSteps();
+
   return (
     <main className="min-h-screen bg-white">
       <div className="flex min-h-screen">
@@ -27,9 +29,7 @@ export default function MatchPage() {
 
           {/* Form */}
           <div className="animate-fade-slide-in" style={{ animationDelay: "160ms" }}>
-            <Suspense fallback={<div className="text-sm text-gray-400">Cargando...</div>}>
-              <MatchForm />
-            </Suspense>
+            <MatchForm steps={steps} />
           </div>
         </div>
 

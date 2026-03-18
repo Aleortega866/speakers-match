@@ -1,0 +1,83 @@
+import { prisma } from "./prisma";
+
+export interface ContactData {
+  nombre: string;
+  apellido: string;
+  empresa: string;
+  email: string;
+}
+
+export async function findContactByToken(token: string): Promise<ContactData | null> {
+  const contact = await prisma.contact.findUnique({
+    where: { token },
+    select: { nombre: true, apellido: true, empresa: true, email: true },
+  });
+  return contact ?? null;
+}
+
+export type EventType = "form_started" | "form_completed";
+
+export interface UpsertContactEventPayload {
+  type: EventType;
+  token?: string;
+  email?: string;
+  fecha_evento?: string;
+  match_answers?: string[];
+}
+
+export async function upsertContactEvent(payload: UpsertContactEventPayload): Promise<void> {
+  const { type, token, email, fecha_evento, match_answers } = payload;
+
+  const now = new Date();
+
+  if (type === "form_started") {
+    if (token) {
+      // Contacto por invitación — actualizar por token
+      await prisma.contact.updateMany({
+        where: { token },
+        data: {
+          form_started_at: now,
+          ...(fecha_evento ? { fecha_evento } : {}),
+        },
+      });
+    } else if (email) {
+      // Contacto orgánico — upsert por email
+      await prisma.contact.upsert({
+        where: { token: undefined as never },
+        create: {
+          nombre: "",
+          apellido: "",
+          empresa: "",
+          email,
+          origen: "organico",
+          form_started_at: now,
+          ...(fecha_evento ? { fecha_evento } : {}),
+        },
+        update: {
+          form_started_at: now,
+          ...(fecha_evento ? { fecha_evento } : {}),
+        },
+      });
+    }
+    return;
+  }
+
+  if (type === "form_completed") {
+    const data = {
+      form_completed_at: now,
+      ...(match_answers ? { match_answers } : {}),
+    };
+
+    if (token) {
+      await prisma.contact.updateMany({
+        where: { token },
+        data,
+      });
+    } else if (email) {
+      await prisma.contact.updateMany({
+        where: { email },
+        data,
+      });
+    }
+  }
+}

@@ -1,19 +1,45 @@
 "use client";
 
-import { useEffect } from "react";
-import { useRouter } from "next/navigation";
+import { useEffect, useState } from "react";
 import Logo from "@/components/ui/Logo";
 import { readSpeakerMatchData, clearSpeakerMatchData } from "@/lib/speakerMatchStore";
 
+const CALENDLY_URL = process.env.NEXT_PUBLIC_CALENDLY_URL ?? "";
+
 export default function GraciasPage() {
-  const router = useRouter();
+  const [calendlyHref, setCalendlyHref] = useState<string>("");
 
   useEffect(() => {
     const data = readSpeakerMatchData();
-    // Punto único donde consolidamos todo el JSON del flujo
-    // Listo para, en el futuro, enviarse a una API.
-    // eslint-disable-next-line no-console
-    console.log("SpeakerMatch data", data);
+
+    // Registrar form_completed en la BD (fire-and-forget)
+    const { nombre, apellido, email } = data.intake;
+    const token = data.token;
+    fetch("/api/event", {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+        Origin: window.location.origin,
+      },
+      body: JSON.stringify({
+        type: "form_completed",
+        ...(token ? { token } : { email }),
+        matchAnswers: data.matchAnswers,
+      }),
+    }).catch(() => {
+      // fire-and-forget: no bloquea la UX si falla
+    });
+
+    // Construir URL de Calendly con prefill
+    if (CALENDLY_URL) {
+      const params = new URLSearchParams();
+      if (nombre || apellido) params.set("name", `${nombre} ${apellido}`.trim());
+      if (email) params.set("email", email);
+      setCalendlyHref(`${CALENDLY_URL}?${params.toString()}`);
+    }
+
+    // Limpiar store una vez registrado
+    clearSpeakerMatchData();
   }, []);
 
   return (
@@ -51,18 +77,27 @@ export default function GraciasPage() {
         para platicar las recomendaciones de esta propuesta
       </p>
 
-      {/* CTA: por ahora vuelve al inicio y borra el flujo guardado; luego se cambiará */}
-      <button
-        type="button"
-        onClick={() => {
-          clearSpeakerMatchData();
-          router.push("/");
-        }}
-        className="btn-primary-typo bg-black text-white px-10 py-4 text-sm tracking-wide transition-all duration-200 hover:opacity-90 hover:-translate-y-0.5 hover:shadow-md inline-block animate-fade-slide-in cursor-pointer"
-        style={{ animationDelay: "300ms" }}
-      >
-        Agenda una llamada
-      </button>
+      {/* CTA: Calendly */}
+      {calendlyHref ? (
+        <a
+          href={calendlyHref}
+          target="_blank"
+          rel="noopener noreferrer"
+          className="btn-primary-typo bg-black text-white px-10 py-4 text-sm tracking-wide transition-all duration-200 hover:opacity-90 hover:-translate-y-0.5 hover:shadow-md inline-block animate-fade-slide-in cursor-pointer"
+          style={{ animationDelay: "300ms" }}
+        >
+          Agenda una llamada
+        </a>
+      ) : (
+        <button
+          type="button"
+          disabled
+          className="btn-primary-typo bg-black text-white px-10 py-4 text-sm tracking-wide opacity-40 cursor-default animate-fade-slide-in inline-block"
+          style={{ animationDelay: "300ms" }}
+        >
+          Agenda una llamada
+        </button>
+      )}
     </main>
   );
 }

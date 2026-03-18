@@ -1,7 +1,7 @@
 "use client";
 
 import { useEffect, useState } from "react";
-import { useRouter } from "next/navigation";
+import { useRouter, useSearchParams } from "next/navigation";
 import dynamic from "next/dynamic";
 import {
   readSpeakerMatchData,
@@ -28,6 +28,7 @@ const steps = [
 
 export default function IntakeForm() {
   const router = useRouter();
+  const searchParams = useSearchParams();
   const [currentStep, setCurrentStep] = useState(0);
   const [formData, setFormData] = useState<FormData>({
     nombre: "",
@@ -38,18 +39,53 @@ export default function IntakeForm() {
   });
   const [started, setStarted] = useState(false);
 
-  // Hidratar desde localStorage al montar (solo cliente)
+  // Hidratar desde localStorage y precargar por token si existe
   useEffect(() => {
-    const data = readSpeakerMatchData();
-    if (data?.intake) {
+    const token = searchParams.get("t");
+
+    // 1. Hidratar desde store local
+    const stored = readSpeakerMatchData();
+    if (stored?.intake) {
       setFormData({
-        nombre: data.intake.nombre ?? "",
-        apellido: data.intake.apellido ?? "",
-        empresa: data.intake.empresa ?? "",
-        email: data.intake.email ?? "",
-        fecha: data.intake.fecha ?? "",
+        nombre: stored.intake.nombre ?? "",
+        apellido: stored.intake.apellido ?? "",
+        empresa: stored.intake.empresa ?? "",
+        email: stored.intake.email ?? "",
+        fecha: stored.intake.fecha ?? "",
       });
     }
+
+    if (!token) return;
+
+    // 2. Precargar desde BD por token (silencioso si falla)
+    fetch(`/api/contact?t=${encodeURIComponent(token)}`)
+      .then((res) => {
+        if (!res.ok) return null;
+        return res.json() as Promise<{
+          nombre: string;
+          apellido: string;
+          empresa: string;
+          email: string;
+        }>;
+      })
+      .then((contact) => {
+        if (!contact) return;
+        const preloaded: FormData = {
+          nombre: contact.nombre ?? "",
+          apellido: contact.apellido ?? "",
+          empresa: contact.empresa ?? "",
+          email: contact.email ?? "",
+          fecha: stored?.intake?.fecha ?? "",
+        };
+        setFormData(preloaded);
+        writeSpeakerMatchData({ intake: preloaded, token });
+        // Si hay datos precargados, avanzar directo al formulario
+        setStarted(true);
+      })
+      .catch(() => {
+        // token inválido o red caída — form vacío sin error visible
+      });
+  // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
   const progressPercent = ((currentStep + 1) / steps.length) * 100;
@@ -67,7 +103,6 @@ export default function IntakeForm() {
     if (currentStep < steps.length - 1) {
       setCurrentStep((s) => s + 1);
     } else {
-      // Persistimos los datos de intake en el store compartido
       writeSpeakerMatchData({
         intake: {
           nombre: formData.nombre,
@@ -120,13 +155,11 @@ export default function IntakeForm() {
 
   return (
     <div className="w-full max-w-lg mx-auto mt-6">
-      {/* Pregunta + campos: una sola transición al cambiar de paso */}
       <div key={currentStep} className="animate-fade-slide-in">
         <p className="font-body text-lg font-semibold text-black mb-6 text-center">
           {steps[currentStep].question}
         </p>
 
-        {/* Fields + botón en la misma fila en sm+ */}
         <div className="flex flex-col sm:flex-row gap-3 items-stretch" onKeyDown={handleKeyDown}>
           <div className="flex flex-col sm:flex-row gap-3 flex-1 min-w-0">
           {currentStep === 0 && (
@@ -219,7 +252,6 @@ export default function IntakeForm() {
         </div>
       </div>
 
-      {/* Progress bar */}
       <div className="mt-8 w-11/12 mx-auto bg-gray-200 h-1.5 rounded-full">
         <div
           className="bg-black h-1.5 transition-all duration-500 rounded-full"
