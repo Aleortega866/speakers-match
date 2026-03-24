@@ -56,7 +56,7 @@ export async function POST(req: NextRequest) {
     return NextResponse.json({ error: "Body inválido" }, { status: 400 });
   }
 
-  const { type, token, email, fecha_evento, matchAnswers } = body as Record<string, unknown>;
+  const { type, token, email, nombre, apellido, empresa, fecha_evento, matchAnswers } = body as Record<string, unknown>;
 
   if (!type || !ALLOWED_TYPES.includes(type as EventType)) {
     return NextResponse.json(
@@ -76,6 +76,9 @@ export async function POST(req: NextRequest) {
     type: type as EventType,
     token: typeof token === "string" ? token : undefined,
     email: typeof email === "string" ? email : undefined,
+    nombre: typeof nombre === "string" ? nombre : undefined,
+    apellido: typeof apellido === "string" ? apellido : undefined,
+    empresa: typeof empresa === "string" ? empresa : undefined,
     fecha_evento: typeof fecha_evento === "string" ? fecha_evento : undefined,
     match_answers: Array.isArray(matchAnswers)
       ? matchAnswers.map(String)
@@ -83,7 +86,7 @@ export async function POST(req: NextRequest) {
   });
 
   // server-after-nonblocking: webhook dispara después de enviar la respuesta al cliente
-  const webhookPayload = { type, token, email, fecha_evento, matchAnswers };
+  const webhookPayload = { type, token, email, nombre, apellido, empresa, fecha_evento, matchAnswers };
   if (type === "form_started") {
     after(() => fireWebhook(process.env.ZAPIER_WEBHOOK_FORM_STARTED, webhookPayload));
   } else if (type === "form_completed") {

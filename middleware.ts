@@ -1,5 +1,7 @@
 import { NextRequest, NextResponse } from "next/server";
 
+const ADMIN_SESSION_COOKIE = "admin_session";
+
 // Rate limiting en memoria — se resetea con cada cold start (suficiente para este MVP)
 const rateLimitMap = new Map<string, { count: number; resetAt: number }>();
 
@@ -15,7 +17,18 @@ function getRateLimitKey(req: NextRequest): string {
 }
 
 export function middleware(req: NextRequest) {
-  if (!req.nextUrl.pathname.startsWith("/api/contact")) {
+  const pathname = req.nextUrl.pathname;
+
+  // Backoffice: sin cookie de sesion, redirigir a login (validacion completa en layout servidor)
+  if (pathname.startsWith("/admin") && pathname !== "/admin/login") {
+    const session = req.cookies.get(ADMIN_SESSION_COOKIE);
+    if (!session?.value) {
+      return NextResponse.redirect(new URL("/admin/login", req.url));
+    }
+    return NextResponse.next();
+  }
+
+  if (!pathname.startsWith("/api/contact")) {
     return NextResponse.next();
   }
 
@@ -50,5 +63,5 @@ export function middleware(req: NextRequest) {
 }
 
 export const config = {
-  matcher: ["/api/contact/:path*"],
+  matcher: ["/api/contact/:path*", "/admin/:path*"],
 };

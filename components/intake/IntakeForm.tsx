@@ -103,15 +103,31 @@ export default function IntakeForm() {
     if (currentStep < steps.length - 1) {
       setCurrentStep((s) => s + 1);
     } else {
-      writeSpeakerMatchData({
-        intake: {
+      const intakeData = {
+        nombre: formData.nombre,
+        apellido: formData.apellido,
+        empresa: formData.empresa,
+        email: formData.email,
+        fecha: formData.fecha,
+      };
+      writeSpeakerMatchData({ intake: intakeData });
+
+      // Disparar form_started (fire-and-forget)
+      const stored = readSpeakerMatchData();
+      const token = stored.token;
+      fetch("/api/event", {
+        method: "POST",
+        headers: { "Content-Type": "application/json", Origin: window.location.origin },
+        body: JSON.stringify({
+          type: "form_started",
+          ...(token ? { token } : { email: formData.email }),
           nombre: formData.nombre,
           apellido: formData.apellido,
           empresa: formData.empresa,
-          email: formData.email,
-          fecha: formData.fecha,
-        },
-      });
+          fecha_evento: formData.fecha,
+        }),
+      }).catch(() => {});
+
       router.push("/match");
     }
   };

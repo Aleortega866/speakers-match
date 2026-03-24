@@ -26,6 +26,7 @@ model Contact {
   correo_abandono_enviado Boolean   @default(false)
   match_answers           Json?
   created_at              DateTime  @default(now())
+  client_matches          ClientMatch[]
 
   @@index([email])
   @@index([origen, form_started_at])
@@ -53,4 +54,72 @@ model MatchStepOption {
   active Boolean   @default(true)
 
   @@index([stepId, active, orden])
+}
+
+// ─── Admin / Backoffice ───────────────────────────────────────────────────────
+
+model AdminUser {
+  id              Int             @id @default(autoincrement())
+  email           String          @unique @db.VarChar(254)
+  password_hash   String          @db.VarChar(255)
+  role            String          @default("admin") @db.VarChar(20)
+  active          Boolean         @default(true)
+  created_at      DateTime        @default(now())
+  updated_at      DateTime        @updatedAt
+  admin_sessions  AdminSession[]
+  admin_auditLogs AdminAuditLog[]
+}
+
+model AdminSession {
+  id                 Int      @id @default(autoincrement())
+  user_id            Int
+  session_token_hash String   @unique @db.VarChar(255)
+  expires_at         DateTime
+  created_at         DateTime @default(now())
+  ip                 String?  @db.VarChar(64)
+  user_agent         String?  @db.VarChar(500)
+  admin_user         AdminUser @relation(fields: [user_id], references: [id], onDelete: Cascade)
+
+  @@index([expires_at])
+}
+
+model Speaker {
+  id            Int           @id @default(autoincrement())
+  nombre        String        @db.VarChar(150)
+  especialidad  String        @db.VarChar(150)
+  bio_short     String?       @db.VarChar(500)
+  active        Boolean       @default(true)
+  created_at    DateTime      @default(now())
+  updated_at    DateTime      @updatedAt
+  client_matches ClientMatch[]
+
+  @@index([nombre])
+}
+
+model ClientMatch {
+  id               Int      @id @default(autoincrement())
+  client_id        Int
+  speaker_id       Int
+  match_score      Int
+  top_skill        String?  @db.VarChar(120)
+  skills_breakdown Json?
+  created_at       DateTime @default(now())
+  contact          Contact  @relation(fields: [client_id], references: [id], onDelete: Cascade)
+  speaker          Speaker  @relation(fields: [speaker_id], references: [id], onDelete: Restrict)
+
+  @@unique([client_id, speaker_id])
+  @@index([client_id, match_score(sort: Desc)])
+}
+
+model AdminAuditLog {
+  id            Int       @id @default(autoincrement())
+  admin_user_id Int
+  action        String    @db.VarChar(50)
+  resource_type String?   @db.VarChar(50)
+  resource_id   String?   @db.VarChar(100)
+  metadata      Json?
+  created_at    DateTime  @default(now())
+  admin_user    AdminUser @relation(fields: [admin_user_id], references: [id], onDelete: Restrict)
+
+  @@index([admin_user_id, created_at(sort: Desc)])
 }

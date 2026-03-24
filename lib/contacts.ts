@@ -21,12 +21,15 @@ export interface UpsertContactEventPayload {
   type: EventType;
   token?: string;
   email?: string;
+  nombre?: string;
+  apellido?: string;
+  empresa?: string;
   fecha_evento?: string;
   match_answers?: string[];
 }
 
 export async function upsertContactEvent(payload: UpsertContactEventPayload): Promise<void> {
-  const { type, token, email, fecha_evento, match_answers } = payload;
+  const { type, token, email, nombre, apellido, empresa, fecha_evento, match_answers } = payload;
 
   const now = new Date();
 
@@ -37,27 +40,39 @@ export async function upsertContactEvent(payload: UpsertContactEventPayload): Pr
         where: { token },
         data: {
           form_started_at: now,
+          ...(nombre ? { nombre } : {}),
+          ...(apellido ? { apellido } : {}),
+          ...(empresa ? { empresa } : {}),
           ...(fecha_evento ? { fecha_evento } : {}),
         },
       });
     } else if (email) {
-      // Contacto orgánico — upsert por email
-      await prisma.contact.upsert({
-        where: { token: undefined as never },
-        create: {
-          nombre: "",
-          apellido: "",
-          empresa: "",
-          email,
-          origen: "organico",
-          form_started_at: now,
-          ...(fecha_evento ? { fecha_evento } : {}),
-        },
-        update: {
-          form_started_at: now,
-          ...(fecha_evento ? { fecha_evento } : {}),
-        },
-      });
+      // Contacto orgánico — buscar por email o crear
+      const existing = await prisma.contact.findFirst({ where: { email } });
+      if (existing) {
+        await prisma.contact.update({
+          where: { id: existing.id },
+          data: {
+            form_started_at: now,
+            ...(nombre ? { nombre } : {}),
+            ...(apellido ? { apellido } : {}),
+            ...(empresa ? { empresa } : {}),
+            ...(fecha_evento ? { fecha_evento } : {}),
+          },
+        });
+      } else {
+        await prisma.contact.create({
+          data: {
+            nombre: nombre ?? "",
+            apellido: apellido ?? "",
+            empresa: empresa ?? "",
+            email,
+            origen: "organico",
+            form_started_at: now,
+            ...(fecha_evento ? { fecha_evento } : {}),
+          },
+        });
+      }
     }
     return;
   }
