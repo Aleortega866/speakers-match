@@ -48,6 +48,7 @@ export default function ImportarClient({ initialPendingCount }: { initialPending
         setImportError(json.message ?? "Error al importar");
       } else {
         setImportResult(json.data);
+        setPendingCount((prev) => prev + (json.data.imported as number));
         router.refresh();
       }
     } catch {
