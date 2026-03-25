@@ -104,13 +104,15 @@ export default function ImportarClient({ initialPendingCount }: { initialPending
       if (!res.ok || !json.ok) {
         addToast(json.message ?? "Error al disparar la campaña", "error");
       } else {
-        const { sent } = json.data as { sent: number };
+        const data = json.data as { sent: number; warning?: string };
+        const { sent, warning } = data;
         addToast(
           sent === 0
             ? "Sin contactos pendientes"
             : `Campaña enviada a ${sent} contacto${sent !== 1 ? "s" : ""}`,
           sent === 0 ? "warning" : "success"
         );
+        if (warning) addToast(warning, "warning");
         setPendingCount(0);
         router.refresh();
       }

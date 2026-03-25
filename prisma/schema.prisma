@@ -121,3 +121,23 @@ model AdminAuditLog {
 
   @@index([admin_user_id, created_at(sort: Desc)])
 }
+
+// ─── Outreach Mailchimp (lock + reconciliación post-send) ───────────────────
+
+model OutreachRunLock {
+  key        String   @id @db.VarChar(50)
+  run_id     String   @db.VarChar(36)
+  started_at DateTime
+  expires_at DateTime
+}
+
+model OutreachReconciliation {
+  id               Int      @id @default(autoincrement())
+  run_id           String   @db.VarChar(36)
+  campaign_id      String   @db.VarChar(50)
+  contact_ids_json String   @db.Text
+  status           String   @default("pending") @db.VarChar(20)
+  created_at       DateTime @default(now())
+
+  @@index([status, created_at])
+}
