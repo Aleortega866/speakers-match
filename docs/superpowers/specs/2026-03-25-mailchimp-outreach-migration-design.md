@@ -27,7 +27,8 @@ Reemplazar el webhook de Zapier+Gmail usado en la campaña de outreach por una i
 |----------|----------|-------|
 | Template de correo | Editable en Mailchimp UI | El cliente lo controla sin tocar código |
 | Error handling | Abortar todo si falla cualquier paso | Solo marcar enviados si Mailchimp confirma el envío |
-| Política de envío | Atómico estricto (todo o nada) | Evita desalineación entre BD y Mailchimp durante el demo |
+| Política de envío | Consistencia controlada (envío atómico funcional) | Si falla antes de enviar, no se marca nada; si falla post-send, se reconcilia |
+| Concurrencia | Bloqueo de ejecución por `outreach_run_id` | Evita doble click y campañas duplicadas |
 | Setup del template | El plan incluye instrucciones paso a paso | El template no existe aún en la cuenta |
 | Envío síncrono vs async | Síncrono | Permite confirmar éxito antes de marcar en BD |
 | Librería Mailchimp | Ninguna (fetch nativo) | Sin dependencias externas |
@@ -43,16 +44,20 @@ Admin click "Disparar campaña"
     → POST /api/admin/outreach
         1. Validar sesión admin
         2. Validar 6 env vars de Mailchimp → 503 si falta alguna
-        3. getPendingOutreachContacts() → contacts[]
-        4. Si contacts.length === 0 → { ok: true, data: { sent: 0 } }
-        5. runMailchimpOutreach(contacts)
+        3. Adquirir lock de ejecución (si ya hay corrida activa → 409 OUTREACH_ALREADY_RUNNING)
+        4. Preflight remoto (template, audience y from email válidos)
+        5. getPendingOutreachContacts() → contacts[]
+        6. Si contacts.length === 0 → { ok: true, data: { sent: 0 } }
+        7. runMailchimpOutreach(contacts)
             a. Para cada contacto: upsertMember() con merge fields
             b. createStaticSegment() con emails de los contactos → segmentId
             c. createCampaign(segmentId) referenciando MAILCHIMP_TEMPLATE_ID → campaignId
             d. sendCampaign(campaignId)
-        6. Si paso 5 lanza error → 500, nadie marcado como enviado
-        7. markContactsAsSent(ids)
-        8. { ok: true, data: { sent: contacts.length } }
+        8. Si paso 7 lanza error → 500, nadie marcado como enviado
+        9. markContactsAsSent(ids)
+       10. Si 9 falla, guardar reconciliation pendiente con campaignId
+       11. { ok: true, data: { sent: contacts.length, runId, campaignId } }
+       12. Liberar lock
 ```
 
 ### Archivos nuevos
@@ -161,13 +166,41 @@ El plan de implementación incluirá estas instrucciones paso a paso:
 | Email duplicado en Mailchimp | `upsertMember` usa PUT — actualiza sin error |
 | Mailchimp rechaza API call | Lanza `Error`, aborta flujo, 500 al cliente |
 | Campaign send falla | `markContactsAsSent` no se llama, admin puede reintentar |
-| `contacts.length > 500` | Warning en respuesta: `{ warning: "Cercano al límite del plan gratuito" }` |
+| Falla post-send al marcar BD | Se registra `outreach_reconciliation` con `campaignId` para reparación manual/automática |
+| `contacts.length > 500` | Se aborta con 422 `MAILCHIMP_FREE_LIMIT_EXCEEDED` (no envío parcial en demo) |
+| Doble disparo simultáneo | 409 `OUTREACH_ALREADY_RUNNING` |
+| 429 / 5xx Mailchimp | Hasta 3 reintentos con backoff exponencial, luego error 502 |
 
-### Regla de atomicidad (aprobada)
+### Regla de consistencia (aprobada)
 
-- El endpoint es **todo o nada**: si falla cualquier operación de Mailchimp para cualquier contacto, no se marca ningún contacto como enviado.
+- El endpoint es **todo o nada antes del send**: si falla cualquier operación antes de `sendCampaign`, no se marca ningún contacto como enviado.
+- Si el envío ya ocurrió y falla la actualización de BD, se crea una tarea de reconciliación para no perder trazabilidad.
 - No se implementa envío parcial ni reporte por contacto en esta fase.
 - El reintento se hace ejecutando nuevamente "Disparar campaña" tras corregir la causa del error.
+
+### Contrato de respuesta del endpoint
+
+- Éxito: `{ ok: true, data: { sent, runId, campaignId, warning? } }`
+- Error de configuración: `503 MAILCHIMP_NOT_CONFIGURED`
+- Error de concurrencia: `409 OUTREACH_ALREADY_RUNNING`
+- Error de límite plan free: `422 MAILCHIMP_FREE_LIMIT_EXCEEDED`
+- Error de proveedor (Mailchimp): `502 MAILCHIMP_UPSTREAM_ERROR`
+- En errores upstream, al cliente se expone solo `errorCode` y mensaje genérico; el detalle HTTP real de Mailchimp se guarda en logs internos con `runId`.
+
+### Persistencia operativa mínima
+
+- `outreach_run_lock` (tabla o registro único):
+  - `key` (único, valor fijo `mailchimp_outreach`)
+  - `run_id` (uuid)
+  - `started_at` (datetime)
+  - `expires_at` (datetime, TTL recomendado 15 min)
+- `outreach_reconciliation`:
+  - `id`
+  - `run_id`
+  - `campaign_id`
+  - `contact_ids_json`
+  - `status` (`pending` inicial)
+  - `created_at`
 
 ---
 
@@ -195,6 +228,9 @@ El plan de implementación incluirá estas instrucciones paso a paso:
 4. Verificar que `enviado_at` se graba en BD
 5. Reintentar campaña — debe retornar `{ sent: 0 }` (ya no hay pendientes)
 6. Probar con env var faltante — debe retornar 503
+7. Simular doble click del botón — una request debe retornar 409
+8. Forzar 429 mockeando Mailchimp — validar reintentos y error 502 final
+9. Simular fallo en `markContactsAsSent` tras send — validar registro de reconciliación
 
 ---
 
@@ -202,10 +238,18 @@ El plan de implementación incluirá estas instrucciones paso a paso:
 
 | Riesgo | Mitigación |
 |--------|-----------|
-| Mailchimp rate limit (upsert por contacto) | Para demo con <100 contactos no es problema; para producción implementar batch upsert |
-| Template ID incorrecto | Validar que `MAILCHIMP_TEMPLATE_ID` existe al inicio del route |
+| Mailchimp rate limit (upsert por contacto) | Reintentos con backoff; para producción evaluar batch ops |
+| Template ID incorrecto | Preflight remoto: verificar existencia de template antes del envío |
 | From email no verificado en Mailchimp | El plan incluye instrucción para verificar el dominio |
 | Segmento con nombre duplicado | Incluir timestamp en el nombre del segmento: `outreach_2026-03-25_1430` |
+
+---
+
+## Criterios de éxito (demo)
+
+- `>= 95%` de corridas de outreach completan sin error en ambiente de staging.
+- `p95` de duración del endpoint `POST /api/admin/outreach` menor a `10s` para lotes de hasta 100 contactos.
+- Todo intento genera logs con `runId`, `contactsCount`, `segmentId` y `campaignId` (si aplica).
 
 ---
 
