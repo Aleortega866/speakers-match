@@ -11,5 +11,5 @@ export function getPublicBaseUrl(): string {
 
 export function inviteStartUrl(token: string): string {
   const base = getPublicBaseUrl();
-  return `${base}/start?t=${encodeURIComponent(token)}`;
+  return `${base}/?t=${encodeURIComponent(token)}`;
 }

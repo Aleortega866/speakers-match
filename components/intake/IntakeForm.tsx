@@ -81,6 +81,19 @@ export default function IntakeForm() {
         writeSpeakerMatchData({ intake: preloaded, token });
         // Si hay datos precargados, avanzar directo al formulario
         setStarted(true);
+
+        // Disparar form_started al abrir el link (fire-and-forget)
+        fetch("/api/event", {
+          method: "POST",
+          headers: { "Content-Type": "application/json", Origin: window.location.origin },
+          body: JSON.stringify({
+            type: "form_started",
+            token,
+            nombre: contact.nombre,
+            apellido: contact.apellido,
+            empresa: contact.empresa,
+          }),
+        }).catch(() => {});
       })
       .catch(() => {
         // token inválido o red caída — form vacío sin error visible
